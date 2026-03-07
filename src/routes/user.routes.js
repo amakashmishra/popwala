@@ -17,6 +17,49 @@ const router = express.Router();
  *     summary: Get current user profile
  *     security:
  *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current user profile
+ *       401:
+ *         description: Unauthorized
+ */
+/**
+ * @swagger
+ * /api/v1/users/me:
+ *   patch:
+ *     tags: [Users]
+ *     summary: Update current user profile
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Profile updated
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ */
+/**
+ * @swagger
+ * /api/v1/users:
+ *   get:
+ *     tags: [Users]
+ *     summary: List users (admin/manager only)
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Users list returned
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
  */
 router.get("/me", authMiddleware, userController.getMe);
 router.patch("/me", authMiddleware, upload.single("profileImage"), validate(updateProfileSchema), userController.updateMe);

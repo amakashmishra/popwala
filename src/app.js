@@ -46,7 +46,21 @@ app.use(
   })
 );
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api-docs")) {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.set("Pragma", "no-cache");
+    res.set("Expires", "0");
+    res.set("Surrogate-Control", "no-store");
+  }
+  next();
+});
+
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec)
+);
 app.use("/api/v1", routes);
 
 app.use(notFound);

@@ -6,11 +6,16 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
+      target: base
     restart: unless-stopped
+    command: npm run dev -- --legacy-watch
     env_file:
       - .env.development
     ports:
       - "5000:5000"
+    volumes:
+      - .:/app
+      - /app/node_modules
     depends_on:
       - mongodb
     networks:
