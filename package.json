@@ -1,0 +1,43 @@
+{
+  "name": "pop-wala-backend",
+  "version": "1.0.0",
+  "description": "Production-ready Node.js Express backend with JWT, Google OAuth, RBAC, and Docker",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "start:pm2": "pm2-runtime server.js --name pop-wala-api",
+    "test": "jest --runInBand --detectOpenHandles",
+    "test:watch": "jest --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^1.41.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express-rate-limit": "^7.4.1",
+    "express": "^5.2.1",
+    "helmet": "^8.1.0",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.10.0",
+    "mongoose": "^9.0.2",
+    "multer": "^2.0.2",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "pm2": "^5.4.3",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "jest": "^30.0.5",
+    "nodemon": "^3.1.11",
+    "supertest": "^7.1.1"
+  }
+}

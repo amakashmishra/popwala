@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  backend:
+    container_name: pop-wala-backend
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env.development
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongodb
+    networks:
+      - pop-wala-network
+
+  mongodb:
+    container_name: pop-wala-mongodb
+    image: mongo:7
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: pop_wala
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - pop-wala-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  pop-wala-network:
+    driver: bridge

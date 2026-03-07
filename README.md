@@ -1,0 +1,115 @@
+# Pop Wala Backend API
+
+Production-ready Node.js Express backend with:
+
+- Multi-environment config (`development`, `staging`, `production`)
+- MongoDB + Mongoose
+- JWT auth (access + refresh)
+- Google OAuth login (Passport)
+- Role-based access control (RBAC)
+- File upload (Multer) + Cloudinary integration
+- Security middleware (Helmet, CORS, Rate Limiting)
+- Structured logging (Morgan + Winston)
+- Swagger API docs (`/api-docs`)
+- Docker + Docker Compose support
+- Jest + Supertest baseline tests
+
+## Project Structure
+
+```text
+project-root
++-- src
+¦   +-- config
+¦   +-- constants
+¦   +-- controllers
+¦   +-- middlewares
+¦   +-- models
+¦   +-- repositories
+¦   +-- routes
+¦   +-- services
+¦   +-- utils
+¦   +-- validators
+¦   +-- app.js
++-- server.js
++-- docker
+¦   +-- Dockerfile
++-- docker-compose.yml
++-- .env.development
++-- .env.staging
++-- .env.production
++-- ecosystem.config.js
++-- jest.config.js
++-- tests
++-- package.json
+```
+
+## Environment Files
+
+Use one of:
+
+- `.env.development`
+- `.env.staging`
+- `.env.production`
+
+Required keys:
+
+- `NODE_ENV`, `PORT`
+- `MONGO_URI`
+- `JWT_SECRET`, `JWT_EXPIRES_IN`
+- `JWT_REFRESH_SECRET`, `JWT_REFRESH_EXPIRES_IN`
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL`
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
+- `FRONTEND_URL`, `API_BASE_URL`, `CORS_ORIGINS`
+
+## Local Run
+
+```bash
+npm install
+npm run dev
+```
+
+Server:
+
+- API base: `http://localhost:5000/api/v1`
+- Docs: `http://localhost:5000/api-docs`
+- Health: `GET /api/v1/health`
+
+## Docker Run
+
+```bash
+docker compose up --build
+```
+
+Services:
+
+- Backend: `http://localhost:5000`
+- MongoDB: `mongodb://localhost:27017`
+
+MongoDB data persists via named volume `mongodb_data`.
+
+## Auth Endpoints
+
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/refresh-token`
+- `POST /api/v1/auth/logout`
+- `GET /api/v1/auth/google`
+- `GET /api/v1/auth/google/callback`
+
+## User Endpoints
+
+- `GET /api/v1/users/me` (auth)
+- `PATCH /api/v1/users/me` (auth, multipart upload)
+- `GET /api/v1/users` (auth + admin/manager)
+
+## Tests
+
+```bash
+npm test
+```
+
+Includes baseline tests for:
+
+- Health API
+- Auth APIs
+- User API
