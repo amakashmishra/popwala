@@ -14,8 +14,14 @@ const {
   updateContractorSchema,
   listContractorsQuerySchema,
 } = require("../../validators/contractor.validator");
+const {
+  createArchitectSchema,
+  updateArchitectSchema,
+  listArchitectsQuerySchema,
+} = require("../../validators/architect.validator");
 const adminController = require("./admin.controller");
 const contractorManagementController = require("./contractor-management.controller");
+const architectManagementController = require("./architect-management.controller");
 
 const router = express.Router();
 
@@ -226,7 +232,7 @@ router.patch(
  * @swagger
  * /api/v1/admin/contractors:
  *   get:
- *     tags: [Admin]
+ *     tags: [Admin Contractors]
  *     summary: List contractors
  *     security:
  *       - bearerAuth: []
@@ -258,7 +264,7 @@ router.get("/contractors", adminAuth, validate(listContractorsQuerySchema, "quer
  * @swagger
  * /api/v1/admin/contractors:
  *   post:
- *     tags: [Admin]
+ *     tags: [Admin Contractors]
  *     summary: Create contractor
  *     security:
  *       - bearerAuth: []
@@ -295,7 +301,7 @@ router.post("/contractors", adminAuth, validate(createContractorSchema), contrac
  * @swagger
  * /api/v1/admin/contractors/{id}:
  *   get:
- *     tags: [Admin]
+ *     tags: [Admin Contractors]
  *     summary: Get contractor by id
  *     security:
  *       - bearerAuth: []
@@ -315,7 +321,7 @@ router.get("/contractors/:id", adminAuth, contractorManagementController.getCont
  * @swagger
  * /api/v1/admin/contractors/{id}:
  *   put:
- *     tags: [Admin]
+ *     tags: [Admin Contractors]
  *     summary: Update contractor
  *     security:
  *       - bearerAuth: []
@@ -355,7 +361,7 @@ router.put("/contractors/:id", adminAuth, validate(updateContractorSchema), cont
  * @swagger
  * /api/v1/admin/contractors/{id}:
  *   delete:
- *     tags: [Admin]
+ *     tags: [Admin Contractors]
  *     summary: Delete contractor
  *     security:
  *       - bearerAuth: []
@@ -370,5 +376,154 @@ router.put("/contractors/:id", adminAuth, validate(updateContractorSchema), cont
  *         description: Contractor deleted
  */
 router.delete("/contractors/:id", adminAuth, contractorManagementController.deleteContractor);
+
+/**
+ * @swagger
+ * /api/v1/admin/architects:
+ *   get:
+ *     tags: [Admin Architects]
+ *     summary: List architects
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [active, inactive]
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Architects fetched
+ */
+router.get("/architects", adminAuth, validate(listArchitectsQuerySchema, "query"), architectManagementController.listArchitects);
+
+/**
+ * @swagger
+ * /api/v1/admin/architects:
+ *   post:
+ *     tags: [Admin Architects]
+ *     summary: Create architect
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, email, phoneNumber, companyName, address, password]
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               phoneNumber:
+ *                 type: string
+ *               companyName:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *                 enum: [active, inactive]
+ *     responses:
+ *       201:
+ *         description: Architect created
+ */
+router.post("/architects", adminAuth, validate(createArchitectSchema), architectManagementController.createArchitect);
+
+/**
+ * @swagger
+ * /api/v1/admin/architects/{id}:
+ *   get:
+ *     tags: [Admin Architects]
+ *     summary: Get architect by id
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Architect fetched
+ */
+router.get("/architects/:id", adminAuth, architectManagementController.getArchitectById);
+
+/**
+ * @swagger
+ * /api/v1/admin/architects/{id}:
+ *   put:
+ *     tags: [Admin Architects]
+ *     summary: Update architect
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               phoneNumber:
+ *                 type: string
+ *               companyName:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *                 enum: [active, inactive]
+ *     responses:
+ *       200:
+ *         description: Architect updated
+ */
+router.put("/architects/:id", adminAuth, validate(updateArchitectSchema), architectManagementController.updateArchitect);
+
+/**
+ * @swagger
+ * /api/v1/admin/architects/{id}:
+ *   delete:
+ *     tags: [Admin Architects]
+ *     summary: Delete architect
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Architect deleted
+ */
+router.delete("/architects/:id", adminAuth, architectManagementController.deleteArchitect);
 
 module.exports = router;
