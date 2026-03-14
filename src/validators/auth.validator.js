@@ -10,6 +10,7 @@ const registerSchema = Joi.object({
 const loginSchema = Joi.object({
   identifier: Joi.string().required(),
   password: Joi.string().required(),
+  rememberMe: Joi.boolean().optional(),
 });
 
 const refreshSchema = Joi.object({

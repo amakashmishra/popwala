@@ -17,6 +17,18 @@ const sanitizeUser = (user) => {
   };
 };
 
+const sanitizeUserForAdminList = (user) => {
+  const base = sanitizeUser(user);
+  if (!base) return null;
+
+  return {
+    ...base,
+    city: user.city || null,
+    enquiries: Number.isFinite(user.enquiriesCount) ? user.enquiriesCount : 0,
+    orders: Number.isFinite(user.ordersCount) ? user.ordersCount : 0,
+  };
+};
+
 const getMyProfile = async (userId) => {
   const user = await userRepository.findById(userId);
   if (!user) throw new AppError("User not found", 404, "USER_NOT_FOUND");
@@ -29,9 +41,47 @@ const updateMyProfile = async (userId, payload) => {
   return sanitizeUser(user);
 };
 
-const listUsers = async () => {
-  const users = await userRepository.findAll();
-  return users.map(sanitizeUser);
+const listUsers = async ({
+  search = "",
+  role,
+  status,
+  page = 1,
+  limit = 20,
+} = {}) => {
+  const safePage = Number.isFinite(Number(page)) ? Math.max(1, Number(page)) : 1;
+  const safeLimit = Number.isFinite(Number(limit)) ? Math.min(100, Math.max(1, Number(limit))) : 20;
+  const skip = (safePage - 1) * safeLimit;
+
+  const [users, total] = await Promise.all([
+    userRepository.findAllWithFilters({ search, role, status, skip, limit: safeLimit }),
+    userRepository.countAllWithFilters({ search, role, status }),
+  ]);
+
+  return {
+    users: users.map(sanitizeUserForAdminList),
+    pagination: {
+      page: safePage,
+      limit: safeLimit,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / safeLimit)),
+    },
+  };
+};
+
+const updateUserStatus = async ({ userId, status, actorId }) => {
+  if (!["active", "blocked", "inactive"].includes(status)) {
+    throw new AppError("Invalid status", 400, "VALIDATION_ERROR");
+  }
+
+  const user = await userRepository.findById(userId);
+  if (!user) throw new AppError("User not found", 404, "USER_NOT_FOUND");
+
+  if (actorId && user._id.toString() === actorId.toString()) {
+    throw new AppError("You cannot update your own status", 400, "VALIDATION_ERROR");
+  }
+
+  const updatedUser = await userRepository.updateById(userId, { status });
+  return sanitizeUser(updatedUser);
 };
 
 const ensureRole = (role) => {
@@ -45,5 +95,6 @@ module.exports = {
   getMyProfile,
   updateMyProfile,
   listUsers,
+  updateUserStatus,
   ensureRole,
 };

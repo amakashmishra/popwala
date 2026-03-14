@@ -10,6 +10,7 @@ const env = require("./config/env");
 const logger = require("./config/logger");
 const swaggerSpec = require("./config/swagger");
 const routes = require("./routes");
+const adminRoutes = require("./modules/admin/admin.routes");
 const notFound = require("./middlewares/notFound.middleware");
 const errorMiddleware = require("./middlewares/error.middleware");
 
@@ -62,6 +63,7 @@ app.use(
   swaggerUi.setup(swaggerSpec)
 );
 app.use("/api/v1", routes);
+app.use("/api/admin", adminRoutes);
 
 app.use(notFound);
 app.use(errorMiddleware);

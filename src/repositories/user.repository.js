@@ -49,6 +49,35 @@ const updateById = (id, payload) =>
 
 const findAll = () => User.find({ deletedAt: null }).sort({ createdAt: -1 });
 
+const buildAdminFilters = ({ search, role, status } = {}) => {
+  const filters = { deletedAt: null };
+
+  if (role) {
+    filters.role = role;
+  }
+
+  if (status) {
+    filters.status = status;
+  }
+
+  if (search) {
+    const searchRegex = new RegExp(search.trim(), "i");
+    filters.$or = [{ name: searchRegex }, { email: searchRegex }, { mobile: searchRegex }];
+  }
+
+  return filters;
+};
+
+const findAllWithFilters = ({ search, role, status, skip = 0, limit = 20 } = {}) => {
+  const filters = buildAdminFilters({ search, role, status });
+  return User.find(filters).sort({ createdAt: -1 }).skip(skip).limit(limit);
+};
+
+const countAllWithFilters = ({ search, role, status } = {}) => {
+  const filters = buildAdminFilters({ search, role, status });
+  return User.countDocuments(filters);
+};
+
 module.exports = {
   create,
   findByEmail,
@@ -58,4 +87,6 @@ module.exports = {
   findByResetTokenHash,
   updateById,
   findAll,
+  findAllWithFilters,
+  countAllWithFilters,
 };

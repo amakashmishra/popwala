@@ -2,11 +2,13 @@ const app = require("./src/app");
 const env = require("./src/config/env");
 const logger = require("./src/config/logger");
 const connectDatabase = require("./src/config/database");
+const { ensureDefaultAdmin } = require("./src/modules/admin/admin.bootstrap");
 
 let server;
 
 const start = async () => {
   await connectDatabase();
+  await ensureDefaultAdmin();
   server = app.listen(env.PORT, () => {
     logger.info(`Server running on port ${env.PORT} (${env.NODE_ENV})`);
   });

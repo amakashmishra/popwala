@@ -36,6 +36,9 @@ const schema = Joi.object({
   CORS_ORIGINS: Joi.string().default("http://localhost:8080,http://localhost:3000"),
   RATE_LIMIT_WINDOW_MS: Joi.number().default(900000),
   RATE_LIMIT_MAX: Joi.number().default(100),
+  ADMIN_NAME: Joi.string().default("PopWala Admin"),
+  ADMIN_EMAIL: Joi.string().email().default("popadmin@gmail.com"),
+  ADMIN_PASSWORD: Joi.string().min(8).default("popwala@123"),
 }).unknown(true);
 
 const { value, error } = schema.validate(process.env, { abortEarly: false });

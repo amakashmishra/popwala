@@ -1,5 +1,6 @@
 module.exports = {
   ADMIN: "admin",
   USER: "user",
-  MANAGER: "manager",
+  ARCHITECT: "architect",
+  CONTRACTOR: "contractor",
 };

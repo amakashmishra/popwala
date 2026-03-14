@@ -1,11 +1,11 @@
-const asyncHandler = require("../utils/asyncHandler");
-const { successResponse } = require("../utils/apiResponse");
-const userService = require("../services/user.service");
-const fileService = require("../services/file.service");
-const fileRepository = require("../repositories/file.repository");
+const asyncHandler = require("../../utils/asyncHandler");
+const { successResponse } = require("../../utils/apiResponse");
+const fileService = require("../../services/file.service");
+const fileRepository = require("../../repositories/file.repository");
+const userModuleService = require("./user.service");
 
 exports.getMe = asyncHandler(async (req, res) => {
-  const user = await userService.getMyProfile(req.user.sub);
+  const user = await userModuleService.getProfile(req.user.sub);
   return successResponse(res, { user }, "Profile fetched");
 });
 
@@ -26,11 +26,6 @@ exports.updateMe = asyncHandler(async (req, res) => {
     });
   }
 
-  const user = await userService.updateMyProfile(req.user.sub, updatePayload);
+  const user = await userModuleService.updateProfile(req.user.sub, updatePayload);
   return successResponse(res, { user }, "Profile updated");
-});
-
-exports.listUsers = asyncHandler(async (req, res) => {
-  const users = await userService.listUsers();
-  return successResponse(res, { users }, "Users fetched");
 });

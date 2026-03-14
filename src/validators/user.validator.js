@@ -8,6 +8,11 @@ const updateProfileSchema = Joi.object({
   status: Joi.string().valid("active", "blocked", "inactive").optional(),
 });
 
+const adminUpdateUserStatusSchema = Joi.object({
+  status: Joi.string().valid("active", "blocked", "inactive").required(),
+});
+
 module.exports = {
   updateProfileSchema,
+  adminUpdateUserStatusSchema,
 };

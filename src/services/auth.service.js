@@ -3,6 +3,7 @@ const logger = require("../config/logger");
 const crypto = require("crypto");
 const userRepository = require("../repositories/user.repository");
 const sessionRepository = require("../repositories/session.repository");
+const roles = require("../constants/roles");
 const { sendEmail } = require("./email.service");
 const {
   signAccessToken,
@@ -89,7 +90,7 @@ const register = async ({ name, email, mobile, password }) => {
     email: normalizedEmail,
     mobile: normalizedMobile,
     password,
-    role: "user",
+    role: roles.USER,
     isEmailVerified: false,
   });
 
@@ -149,13 +150,18 @@ const resendEmailOtp = async ({ email }) => {
   return { otp };
 };
 
-const login = async ({ identifier, password }, meta) => {
+const login = async ({ identifier, password }, meta, options = {}) => {
+  const allowedRoles = options.allowedRoles || null;
   const normalizedIdentifier = normalizeIdentifier(identifier);
   const user = await userRepository.findByIdentifier(normalizedIdentifier, true, true);
   if (!user || !user.password) throw new AppError("Invalid credentials", 401, "INVALID_CREDENTIALS");
 
   const isValid = await user.comparePassword(password);
   if (!isValid) throw new AppError("Invalid credentials", 401, "INVALID_CREDENTIALS");
+
+  if (Array.isArray(allowedRoles) && allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+    throw new AppError("Invalid credentials", 401, "INVALID_CREDENTIALS");
+  }
 
   if (user.status !== "active") {
     throw new AppError("User account is not active", 403, "ACCOUNT_INACTIVE");
