@@ -1,6 +1,6 @@
 const crypto = require("crypto");
 const AppError = require("../../utils/appError");
-const { signAccessToken, hashToken } = require("../../utils/jwt");
+const { signAccessToken, signRefreshToken, verifyRefreshToken, hashToken } = require("../../utils/jwt");
 const { sendEmail } = require("../../services/email.service");
 const adminRepository = require("../../repositories/admin.repository");
 const env = require("../../config/env");
@@ -29,6 +29,14 @@ const signAdminAccessToken = (admin) =>
     actorType: "admin",
   });
 
+const signAdminRefreshToken = (admin) =>
+  signRefreshToken({
+    sub: admin._id.toString(),
+    email: admin.email,
+    role: roles.ADMIN,
+    actorType: "admin",
+  });
+
 const login = async ({ email, identifier, password }) => {
   const rawEmail = (email || identifier || "").trim().toLowerCase();
   if (!rawEmail) {
@@ -48,7 +56,34 @@ const login = async ({ email, identifier, password }) => {
   }
 
   const accessToken = signAdminAccessToken(admin);
-  return { accessToken, admin: sanitizeAdmin(admin) };
+  const refreshToken = signAdminRefreshToken(admin);
+  return { accessToken, refreshToken, admin: sanitizeAdmin(admin) };
+};
+
+const refresh = async (refreshToken) => {
+  if (!refreshToken) throw new AppError("Refresh token missing", 401, "UNAUTHORIZED");
+
+  let decoded;
+  try {
+    decoded = verifyRefreshToken(refreshToken);
+  } catch (error) {
+    throw new AppError("Invalid refresh token", 401, "UNAUTHORIZED");
+  }
+
+  if (decoded.role !== roles.ADMIN || decoded.actorType !== "admin") {
+    throw new AppError("Invalid refresh token", 401, "UNAUTHORIZED");
+  }
+
+  const admin = await adminRepository.findById(decoded.sub);
+  if (!admin || admin.status !== "active") {
+    throw new AppError("Admin not found or inactive", 401, "UNAUTHORIZED");
+  }
+
+  return {
+    accessToken: signAdminAccessToken(admin),
+    refreshToken: signAdminRefreshToken(admin),
+    admin: sanitizeAdmin(admin),
+  };
 };
 
 const forgotPassword = async ({ email }) => {
@@ -110,6 +145,7 @@ const changePassword = async ({ adminId, currentPassword, newPassword }) => {
 module.exports = {
   sanitizeAdmin,
   login,
+  refresh,
   forgotPassword,
   resetPassword,
   getProfile,

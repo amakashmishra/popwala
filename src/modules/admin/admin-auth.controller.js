@@ -1,15 +1,36 @@
 const asyncHandler = require("../../utils/asyncHandler");
 const { successResponse } = require("../../utils/apiResponse");
-const { setAccessCookie } = require("../../utils/authCookies");
+const { setAuthCookies } = require("../../utils/authCookies");
 const adminAuthService = require("./admin-auth.service");
 
 exports.login = asyncHandler(async (req, res) => {
   const payload = await adminAuthService.login(req.body);
-  setAccessCookie(res, payload.accessToken, Boolean(req.body.rememberMe));
+  setAuthCookies(res, payload.accessToken, payload.refreshToken, Boolean(req.body.rememberMe));
   return successResponse(
     res,
-    { token: payload.accessToken, accessToken: payload.accessToken, admin: payload.admin },
+    {
+      token: payload.accessToken,
+      accessToken: payload.accessToken,
+      refreshToken: payload.refreshToken,
+      admin: payload.admin,
+    },
     "Admin login successful"
+  );
+});
+
+exports.refresh = asyncHandler(async (req, res) => {
+  const token = req.body.refreshToken || req.cookies?.refreshToken;
+  const payload = await adminAuthService.refresh(token);
+  setAuthCookies(res, payload.accessToken, payload.refreshToken, true);
+  return successResponse(
+    res,
+    {
+      token: payload.accessToken,
+      accessToken: payload.accessToken,
+      refreshToken: payload.refreshToken,
+      admin: payload.admin,
+    },
+    "Admin token refreshed"
   );
 });
 

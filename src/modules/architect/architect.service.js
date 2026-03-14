@@ -1,7 +1,7 @@
 const AppError = require("../../utils/appError");
 const roles = require("../../constants/roles");
 const architectRepository = require("../../repositories/architect.repository");
-const { signAccessToken, signRefreshToken } = require("../../utils/jwt");
+const { signAccessToken, signRefreshToken, verifyRefreshToken } = require("../../utils/jwt");
 
 const normalizeIdentifier = (identifier = "") => identifier.trim().toLowerCase();
 const normalizePhone = (value = "") => value.replace(/\D/g, "");
@@ -66,7 +66,40 @@ const getProfile = async (architectId) => {
   return sanitizeArchitect(architect);
 };
 
+const refresh = async (refreshToken) => {
+  if (!refreshToken) throw new AppError("Refresh token missing", 401, "UNAUTHORIZED");
+
+  let decoded;
+  try {
+    decoded = verifyRefreshToken(refreshToken);
+  } catch (error) {
+    throw new AppError("Invalid refresh token", 401, "UNAUTHORIZED");
+  }
+
+  if (decoded.role !== roles.ARCHITECT) {
+    throw new AppError("Invalid refresh token", 401, "UNAUTHORIZED");
+  }
+
+  const architect = await architectRepository.findById(decoded.sub);
+  if (!architect || architect.status !== "active") {
+    throw new AppError("Architect not found or inactive", 401, "UNAUTHORIZED");
+  }
+
+  const tokenPayload = {
+    sub: architect._id.toString(),
+    role: roles.ARCHITECT,
+    email: architect.email,
+  };
+
+  return {
+    user: sanitizeArchitect(architect),
+    accessToken: signAccessToken(tokenPayload),
+    refreshToken: signRefreshToken(tokenPayload),
+  };
+};
+
 module.exports = {
   login,
+  refresh,
   getProfile,
 };

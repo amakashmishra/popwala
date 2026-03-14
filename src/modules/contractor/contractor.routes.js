@@ -3,7 +3,7 @@ const authMiddleware = require("../../middlewares/auth.middleware");
 const rbac = require("../../middlewares/rbac.middleware");
 const validate = require("../../middlewares/validate.middleware");
 const roles = require("../../constants/roles");
-const { loginSchema } = require("../../validators/auth.validator");
+const { loginSchema, refreshSchema } = require("../../validators/auth.validator");
 const contractorController = require("./contractor.controller");
 
 const router = express.Router();
@@ -35,6 +35,29 @@ const router = express.Router();
  *         description: Invalid credentials
  */
 router.post("/auth/login", validate(loginSchema), contractorController.login);
+
+/**
+ * @swagger
+ * /api/v1/contractor/auth/refresh-token:
+ *   post:
+ *     tags: [Contractor]
+ *     summary: Refresh contractor access token
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Token refreshed
+ *       401:
+ *         description: Invalid refresh token
+ */
+router.post("/auth/refresh-token", validate(refreshSchema), contractorController.refresh);
 
 /**
  * @swagger

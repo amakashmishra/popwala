@@ -1,7 +1,7 @@
 const AppError = require("../../utils/appError");
 const roles = require("../../constants/roles");
 const contractorRepository = require("../../repositories/contractor.repository");
-const { signAccessToken, signRefreshToken } = require("../../utils/jwt");
+const { signAccessToken, signRefreshToken, verifyRefreshToken } = require("../../utils/jwt");
 
 const normalizeIdentifier = (identifier = "") => identifier.trim().toLowerCase();
 const normalizePhone = (value = "") => value.replace(/\D/g, "");
@@ -66,7 +66,40 @@ const getProfile = async (contractorId) => {
   return sanitizeContractor(contractor);
 };
 
+const refresh = async (refreshToken) => {
+  if (!refreshToken) throw new AppError("Refresh token missing", 401, "UNAUTHORIZED");
+
+  let decoded;
+  try {
+    decoded = verifyRefreshToken(refreshToken);
+  } catch (error) {
+    throw new AppError("Invalid refresh token", 401, "UNAUTHORIZED");
+  }
+
+  if (decoded.role !== roles.CONTRACTOR) {
+    throw new AppError("Invalid refresh token", 401, "UNAUTHORIZED");
+  }
+
+  const contractor = await contractorRepository.findById(decoded.sub);
+  if (!contractor || contractor.status !== "active") {
+    throw new AppError("Contractor not found or inactive", 401, "UNAUTHORIZED");
+  }
+
+  const tokenPayload = {
+    sub: contractor._id.toString(),
+    role: roles.CONTRACTOR,
+    email: contractor.email,
+  };
+
+  return {
+    user: sanitizeContractor(contractor),
+    accessToken: signAccessToken(tokenPayload),
+    refreshToken: signRefreshToken(tokenPayload),
+  };
+};
+
 module.exports = {
   login,
+  refresh,
   getProfile,
 };

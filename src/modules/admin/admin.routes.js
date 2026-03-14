@@ -5,6 +5,7 @@ const adminAuthController = require("./admin-auth.controller");
 const { adminUpdateUserStatusSchema } = require("../../validators/user.validator");
 const {
   adminLoginSchema,
+  adminRefreshSchema,
   adminForgotPasswordSchema,
   adminResetPasswordSchema,
   adminChangePasswordSchema,
@@ -56,6 +57,29 @@ const router = express.Router();
  *         description: Invalid credentials
  */
 router.post("/auth/login", validate(adminLoginSchema), adminAuthController.login);
+
+/**
+ * @swagger
+ * /api/v1/admin/auth/refresh-token:
+ *   post:
+ *     tags: [Admin Auth]
+ *     summary: Refresh admin access token
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Token refreshed
+ *       401:
+ *         description: Invalid refresh token
+ */
+router.post("/auth/refresh-token", validate(adminRefreshSchema), adminAuthController.refresh);
 
 /**
  * @swagger

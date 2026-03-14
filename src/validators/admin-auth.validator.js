@@ -25,9 +25,14 @@ const adminChangePasswordSchema = Joi.object({
   newPassword: Joi.string().min(8).max(64).required(),
 });
 
+const adminRefreshSchema = Joi.object({
+  refreshToken: Joi.string().optional(),
+});
+
 module.exports = {
   adminLoginSchema,
   adminForgotPasswordSchema,
   adminResetPasswordSchema,
   adminChangePasswordSchema,
+  adminRefreshSchema,
 };
