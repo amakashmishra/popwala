@@ -1,7 +1,9 @@
 const AppError = require("../utils/appError");
 const logger = require("../config/logger");
+const crypto = require("crypto");
 const userRepository = require("../repositories/user.repository");
 const sessionRepository = require("../repositories/session.repository");
+const { sendEmail } = require("./email.service");
 const {
   signAccessToken,
   signRefreshToken,
@@ -10,10 +12,22 @@ const {
 } = require("../utils/jwt");
 const { sanitizeUser } = require("./user.service");
 
+const OTP_TTL_MS = 10 * 60 * 1000;
+const RESET_PASSWORD_TTL_MS = 15 * 60 * 1000;
+
 const getClientMeta = (req) => ({
   userAgent: req.headers["user-agent"] || "",
   ip: req.ip || req.connection?.remoteAddress || "",
 });
+
+const normalizeMobile = (value = "") => value.replace(/\D/g, "");
+const isEmail = (value = "") => value.includes("@");
+
+const normalizeIdentifier = (identifier = "") => {
+  const trimmed = identifier.trim();
+  if (isEmail(trimmed)) return trimmed.toLowerCase();
+  return normalizeMobile(trimmed);
+};
 
 const buildTokenPayload = (user) => ({
   sub: user._id.toString(),
@@ -38,33 +52,128 @@ const createSessionAndTokens = async (user, meta) => {
   return { accessToken, refreshToken };
 };
 
-const register = async ({ name, email, password }) => {
-  const existing = await userRepository.findByEmail(email);
-  if (existing) throw new AppError("Email already registered", 409, "EMAIL_EXISTS");
+const generateOtp = () => String(Math.floor(100000 + Math.random() * 900000));
+
+const sendOtpEmail = async (user, otp) => {
+  await sendEmail({
+    to: user.email,
+    subject: "Verify your email - Pop Wala",
+    text: `Your OTP is ${otp}. It expires in 10 minutes.`,
+    html: `<p>Your OTP is <b>${otp}</b>.</p><p>It expires in 10 minutes.</p>`,
+  });
+};
+
+const issueAndStoreEmailOtp = async (user) => {
+  const otp = generateOtp();
+  user.emailOtpCodeHash = hashToken(otp);
+  user.emailOtpExpiresAt = new Date(Date.now() + OTP_TTL_MS);
+  await user.save();
+  await sendOtpEmail(user, otp);
+  return otp;
+};
+
+const register = async ({ name, email, mobile, password }) => {
+  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedMobile = normalizeMobile(mobile);
+
+  const [existingEmail, existingMobile] = await Promise.all([
+    userRepository.findByEmail(normalizedEmail),
+    userRepository.findByMobile(normalizedMobile),
+  ]);
+
+  if (existingEmail) throw new AppError("Email already registered", 409, "EMAIL_EXISTS");
+  if (existingMobile) throw new AppError("Mobile number already registered", 409, "MOBILE_EXISTS");
 
   const user = await userRepository.create({
     name,
-    email,
+    email: normalizedEmail,
+    mobile: normalizedMobile,
     password,
     role: "user",
+    isEmailVerified: false,
   });
 
-  logger.info("User registered", { userId: user._id, email: user.email });
+  const otp = await issueAndStoreEmailOtp(user);
+  await sendEmail({
+    to: user.email,
+    subject: "Welcome to Pop Wala",
+    text: `Welcome ${user.name}. Your account was created successfully. Verify with OTP ${otp}.`,
+    html: `<p>Welcome ${user.name}, your account was created successfully.</p><p>Verify using OTP <b>${otp}</b>.</p>`,
+  });
+
+  logger.info("User registered", { userId: user._id, email: user.email, mobile: user.mobile });
+  return { user: sanitizeUser(user), otp };
+};
+
+const verifyEmailOtp = async ({ email, otp }) => {
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = await userRepository.findByEmail(normalizedEmail, false, true);
+  if (!user) throw new AppError("User not found", 404, "USER_NOT_FOUND");
+
+  if (!user.emailOtpCodeHash || !user.emailOtpExpiresAt || user.emailOtpExpiresAt < new Date()) {
+    throw new AppError("OTP expired. Please request a new OTP", 400, "OTP_EXPIRED");
+  }
+
+  if (hashToken(otp) !== user.emailOtpCodeHash) {
+    throw new AppError("Invalid OTP", 400, "INVALID_OTP");
+  }
+
+  user.isEmailVerified = true;
+  user.emailOtpCodeHash = null;
+  user.emailOtpExpiresAt = null;
+  await user.save();
+
+  await sendEmail({
+    to: user.email,
+    subject: "Email verified - Pop Wala",
+    text: `Hi ${user.name}, your email has been verified successfully.`,
+    html: `<p>Hi ${user.name}, your email has been verified successfully.</p>`,
+  });
+
   return sanitizeUser(user);
 };
 
-const login = async ({ email, password }, meta) => {
-  const user = await userRepository.findByEmail(email, true);
-  if (!user || !user.password) throw new AppError("Invalid email or password", 401, "INVALID_CREDENTIALS");
+const resendEmailOtp = async ({ email }) => {
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = await userRepository.findByEmail(normalizedEmail, false, true);
+  if (!user) {
+    return {};
+  }
+
+  if (user.isEmailVerified) {
+    return { alreadyVerified: true };
+  }
+
+  const otp = await issueAndStoreEmailOtp(user);
+  logger.info("Verification OTP resent", { userId: user._id, email: user.email });
+  return { otp };
+};
+
+const login = async ({ identifier, password }, meta) => {
+  const normalizedIdentifier = normalizeIdentifier(identifier);
+  const user = await userRepository.findByIdentifier(normalizedIdentifier, true, true);
+  if (!user || !user.password) throw new AppError("Invalid credentials", 401, "INVALID_CREDENTIALS");
 
   const isValid = await user.comparePassword(password);
-  if (!isValid) throw new AppError("Invalid email or password", 401, "INVALID_CREDENTIALS");
+  if (!isValid) throw new AppError("Invalid credentials", 401, "INVALID_CREDENTIALS");
 
   if (user.status !== "active") {
     throw new AppError("User account is not active", 403, "ACCOUNT_INACTIVE");
   }
 
+  if (!user.isEmailVerified) {
+    throw new AppError("Email is not verified. Please verify OTP first", 403, "EMAIL_NOT_VERIFIED");
+  }
+
   const tokens = await createSessionAndTokens(user, meta);
+
+  await sendEmail({
+    to: user.email,
+    subject: "Login alert - Pop Wala",
+    text: `A login happened on your account from IP ${meta.ip}.`,
+    html: `<p>A login happened on your account from IP <b>${meta.ip}</b>.</p>`,
+  });
+
   logger.info("User login success", { userId: user._id, email: user.email, ip: meta.ip });
 
   return {
@@ -123,11 +232,69 @@ const issueTokensForOAuthUser = async (user, meta) => {
   };
 };
 
+const forgotPassword = async (identifier) => {
+  const normalizedIdentifier = normalizeIdentifier(identifier);
+  const user = await userRepository.findByIdentifier(normalizedIdentifier, false, true);
+  if (!user) {
+    return {};
+  }
+
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  const resetTokenHash = hashToken(resetToken);
+  const resetPasswordExpiresAt = new Date(Date.now() + RESET_PASSWORD_TTL_MS);
+
+  user.resetPasswordTokenHash = resetTokenHash;
+  user.resetPasswordExpiresAt = resetPasswordExpiresAt;
+  await user.save();
+
+  await sendEmail({
+    to: user.email,
+    subject: "Reset your password - Pop Wala",
+    text: `Use this reset token: ${resetToken}. It expires in 15 minutes.`,
+    html: `<p>Use this reset token: <b>${resetToken}</b>.</p><p>It expires in 15 minutes.</p>`,
+  });
+
+  logger.info("Reset password token generated", { userId: user._id, email: user.email });
+
+  return {
+    resetToken,
+    resetPasswordExpiresAt,
+  };
+};
+
+const resetPassword = async (token, newPassword) => {
+  const tokenHash = hashToken(token);
+  const user = await userRepository.findByResetTokenHash(tokenHash);
+
+  if (!user) {
+    throw new AppError("Invalid or expired reset token", 400, "INVALID_RESET_TOKEN");
+  }
+
+  user.password = newPassword;
+  user.resetPasswordTokenHash = null;
+  user.resetPasswordExpiresAt = null;
+  await user.save();
+
+  await sendEmail({
+    to: user.email,
+    subject: "Password changed - Pop Wala",
+    text: "Your password was changed successfully.",
+    html: "<p>Your password was changed successfully.</p>",
+  });
+
+  logger.info("Password reset success", { userId: user._id, email: user.email });
+  return sanitizeUser(user);
+};
+
 module.exports = {
   register,
   login,
   refresh,
   logout,
   issueTokensForOAuthUser,
+  forgotPassword,
+  resetPassword,
+  verifyEmailOtp,
+  resendEmailOtp,
   getClientMeta,
 };

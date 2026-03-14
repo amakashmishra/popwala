@@ -8,6 +8,7 @@ const sanitizeUser = (user) => {
     id: user._id,
     name: user.name,
     email: user.email,
+    mobile: user.mobile,
     profileImage: user.profileImage,
     role: user.role,
     status: user.status,

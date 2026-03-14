@@ -13,11 +13,11 @@ const authService = require("../src/services/auth.service");
 
 describe("Auth APIs", () => {
   it("registers user", async () => {
-    authService.register.mockResolvedValue({ id: "u1", email: "john@example.com" });
+    authService.register.mockResolvedValue({ user: { id: "u1", email: "john@example.com" }, otp: "123456" });
 
     const response = await request(app)
       .post("/api/v1/auth/register")
-      .send({ name: "John", email: "john@example.com", password: "password123" });
+      .send({ name: "John", email: "john@example.com", mobile: "9876543210", password: "password123" });
 
     expect(response.status).toBe(201);
     expect(response.body.success).toBe(true);
@@ -32,7 +32,7 @@ describe("Auth APIs", () => {
 
     const response = await request(app)
       .post("/api/v1/auth/login")
-      .send({ email: "john@example.com", password: "password123" });
+      .send({ identifier: "john@example.com", password: "password123" });
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);

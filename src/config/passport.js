@@ -30,6 +30,7 @@ if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET && env.GOOGLE_CALLBACK_URL)
             });
           } else {
             user.googleId = profile.id;
+            user.isEmailVerified = true;
             if (!user.profileImage && profile?.photos?.[0]?.value) {
               user.profileImage = profile.photos[0].value;
             }

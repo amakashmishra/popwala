@@ -2,9 +2,22 @@ const express = require("express");
 const passport = require("../config/passport");
 const authController = require("../controllers/auth.controller");
 const validate = require("../middlewares/validate.middleware");
-const { registerSchema, loginSchema, refreshSchema } = require("../validators/auth.validator");
+const env = require("../config/env");
+const {
+  registerSchema,
+  loginSchema,
+  refreshSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  verifyEmailOtpSchema,
+  resendEmailOtpSchema,
+} = require("../validators/auth.validator");
 
 const router = express.Router();
+const isGoogleAuthConfigured =
+  Boolean(env.GOOGLE_CLIENT_ID) &&
+  Boolean(env.GOOGLE_CLIENT_SECRET) &&
+  Boolean(env.GOOGLE_CALLBACK_URL);
 
 /**
  * @swagger
@@ -96,12 +109,38 @@ router.post("/register", validate(registerSchema), authController.register);
 router.post("/login", validate(loginSchema), authController.login);
 router.post("/refresh-token", validate(refreshSchema), authController.refresh);
 router.post("/logout", authController.logout);
+router.post("/forgot-password", validate(forgotPasswordSchema), authController.forgotPassword);
+router.post("/reset-password", validate(resetPasswordSchema), authController.resetPassword);
+router.post("/verify-email-otp", validate(verifyEmailOtpSchema), authController.verifyEmailOtp);
+router.post("/resend-email-otp", validate(resendEmailOtpSchema), authController.resendEmailOtp);
 
-router.get("/google", passport.authenticate("google", { scope: ["profile", "email"], session: false }));
-router.get(
-  "/google/callback",
-  passport.authenticate("google", { session: false, failureRedirect: "/api/v1/health" }),
-  authController.googleCallback
-);
+if (isGoogleAuthConfigured) {
+  router.get("/google", (req, res, next) => {
+    const redirect = req.query.redirect || `${env.FRONTEND_URL}/auth?google=success`;
+    const state = Buffer.from(JSON.stringify({ redirect }), "utf8").toString("base64url");
+
+    return passport.authenticate("google", {
+      scope: ["profile", "email"],
+      session: false,
+      state,
+    })(req, res, next);
+  });
+
+  router.get(
+    "/google/callback",
+    passport.authenticate("google", { session: false, failureRedirect: `${env.FRONTEND_URL}/auth?google=error` }),
+    authController.googleCallback
+  );
+} else {
+  const handler = (req, res) =>
+    res.status(503).json({
+      success: false,
+      message: "Google login is not configured on the server",
+      errorCode: "GOOGLE_AUTH_NOT_CONFIGURED",
+    });
+
+  router.get("/google", handler);
+  router.get("/google/callback", handler);
+}
 
 module.exports = router;

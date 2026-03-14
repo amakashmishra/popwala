@@ -6,12 +6,17 @@ const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, index: true },
+    mobile: { type: String, unique: true, sparse: true, index: true, default: null },
     password: { type: String, select: false },
     googleId: { type: String, index: true, default: null },
     profileImage: { type: String, default: "" },
     role: { type: String, enum: Object.values(roles), default: roles.USER, index: true },
     status: { type: String, enum: ["active", "blocked", "inactive"], default: "active" },
     isEmailVerified: { type: Boolean, default: false },
+    emailOtpCodeHash: { type: String, default: null, select: false },
+    emailOtpExpiresAt: { type: Date, default: null, select: false },
+    resetPasswordTokenHash: { type: String, default: null, select: false },
+    resetPasswordExpiresAt: { type: Date, default: null, select: false },
     deletedAt: { type: Date, default: null, index: true },
   },
   { timestamps: true }
