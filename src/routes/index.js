@@ -6,6 +6,7 @@ const adminRoutes = require("../modules/admin/admin.routes");
 const architectRoutes = require("../modules/architect/architect.routes");
 const contractorRoutes = require("../modules/contractor/contractor.routes");
 const bannerRoutes = require("../modules/banner/banner.routes");
+const catalogRoutes = require("../modules/catalog/catalog.routes");
 
 const router = express.Router();
 
@@ -16,5 +17,6 @@ router.use("/admin", adminRoutes);
 router.use("/architect", architectRoutes);
 router.use("/contractor", contractorRoutes);
 router.use("/banners", bannerRoutes);
+router.use("/catalog", catalogRoutes);
 
 module.exports = router;

@@ -27,10 +27,19 @@ const {
   updateBannerStatusSchema,
   listBannersQuerySchema,
 } = require("../../validators/banner.validator");
+const {
+  createCatalogSchema,
+  updateCatalogSchema,
+  updateCatalogStatusSchema,
+  listCatalogQuerySchema,
+} = require("../../validators/catalog.validator");
 const adminController = require("./admin.controller");
 const contractorManagementController = require("./contractor-management.controller");
 const architectManagementController = require("./architect-management.controller");
 const bannerManagementController = require("./banner-management.controller");
+const stylesController = require("../catalog/styles.controller");
+const typesController = require("../catalog/types.controller");
+const categoriesController = require("../catalog/categories.controller");
 
 const router = express.Router();
 
@@ -762,5 +771,68 @@ router.patch(
  *         description: Banner deleted
  */
 router.delete("/banners/:id", adminAuth, bannerManagementController.deleteBanner);
+
+router.get(
+  "/product-types",
+  adminAuth,
+  validate(listCatalogQuerySchema, "query"),
+  typesController.listTypes
+);
+router.post("/product-types", adminAuth, validate(createCatalogSchema), typesController.createType);
+router.get("/product-types/:id", adminAuth, typesController.getType);
+router.put("/product-types/:id", adminAuth, validate(updateCatalogSchema), typesController.updateType);
+router.patch(
+  "/product-types/:id/status",
+  adminAuth,
+  validate(updateCatalogStatusSchema),
+  typesController.updateTypeStatus
+);
+router.delete("/product-types/:id", adminAuth, typesController.deleteType);
+
+router.get(
+  "/categories",
+  adminAuth,
+  validate(listCatalogQuerySchema, "query"),
+  categoriesController.listCategories
+);
+router.post("/categories", adminAuth, validate(createCatalogSchema), categoriesController.createCategory);
+router.get("/categories/:id", adminAuth, categoriesController.getCategory);
+router.put("/categories/:id", adminAuth, validate(updateCatalogSchema), categoriesController.updateCategory);
+router.patch(
+  "/categories/:id/status",
+  adminAuth,
+  validate(updateCatalogStatusSchema),
+  categoriesController.updateCategoryStatus
+);
+router.delete("/categories/:id", adminAuth, categoriesController.deleteCategory);
+
+router.get(
+  "/styles",
+  adminAuth,
+  validate(listCatalogQuerySchema, "query"),
+  stylesController.listStyles
+);
+router.post(
+  "/styles",
+  adminAuth,
+  upload.single("image"),
+  validate(createCatalogSchema),
+  stylesController.createStyle
+);
+router.get("/styles/:id", adminAuth, stylesController.getStyle);
+router.put(
+  "/styles/:id",
+  adminAuth,
+  upload.single("image"),
+  validate(updateCatalogSchema),
+  stylesController.updateStyle
+);
+router.patch(
+  "/styles/:id/status",
+  adminAuth,
+  validate(updateCatalogStatusSchema),
+  stylesController.updateStyleStatus
+);
+router.delete("/styles/:id", adminAuth, stylesController.deleteStyle);
 
 module.exports = router;
