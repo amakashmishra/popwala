@@ -1,5 +1,6 @@
 const express = require("express");
 const adminAuth = require("../../middlewares/adminAuth.middleware");
+const upload = require("../../middlewares/upload.middleware");
 const validate = require("../../middlewares/validate.middleware");
 const adminAuthController = require("./admin-auth.controller");
 const { adminUpdateUserStatusSchema } = require("../../validators/user.validator");
@@ -20,9 +21,16 @@ const {
   updateArchitectSchema,
   listArchitectsQuerySchema,
 } = require("../../validators/architect.validator");
+const {
+  createBannerSchema,
+  updateBannerSchema,
+  updateBannerStatusSchema,
+  listBannersQuerySchema,
+} = require("../../validators/banner.validator");
 const adminController = require("./admin.controller");
 const contractorManagementController = require("./contractor-management.controller");
 const architectManagementController = require("./architect-management.controller");
+const bannerManagementController = require("./banner-management.controller");
 
 const router = express.Router();
 
@@ -549,5 +557,210 @@ router.put("/architects/:id", adminAuth, validate(updateArchitectSchema), archit
  *         description: Architect deleted
  */
 router.delete("/architects/:id", adminAuth, architectManagementController.deleteArchitect);
+
+/**
+ * @swagger
+ * /api/v1/admin/banners:
+ *   get:
+ *     tags: [Website Banners]
+ *     summary: List website banners for admin
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [active, inactive]
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Banners fetched
+ */
+router.get("/banners", adminAuth, validate(listBannersQuerySchema, "query"), bannerManagementController.listBanners);
+
+/**
+ * @swagger
+ * /api/v1/admin/banners:
+ *   post:
+ *     tags: [Website Banners]
+ *     summary: Create website banner
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [image, titleEn, titleHi, titleMr, descriptionEn, descriptionHi, descriptionMr]
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *               titleEn:
+ *                 type: string
+ *               titleHi:
+ *                 type: string
+ *               titleMr:
+ *                 type: string
+ *               descriptionEn:
+ *                 type: string
+ *               descriptionHi:
+ *                 type: string
+ *               descriptionMr:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *                 enum: [active, inactive]
+ *     responses:
+ *       201:
+ *         description: Banner created
+ */
+router.post(
+  "/banners",
+  adminAuth,
+  upload.single("image"),
+  validate(createBannerSchema),
+  bannerManagementController.createBanner
+);
+
+/**
+ * @swagger
+ * /api/v1/admin/banners/{id}:
+ *   get:
+ *     tags: [Website Banners]
+ *     summary: Get banner by id
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Banner fetched
+ */
+router.get("/banners/:id", adminAuth, bannerManagementController.getBannerById);
+
+/**
+ * @swagger
+ * /api/v1/admin/banners/{id}:
+ *   put:
+ *     tags: [Website Banners]
+ *     summary: Update banner
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *               titleEn:
+ *                 type: string
+ *               titleHi:
+ *                 type: string
+ *               titleMr:
+ *                 type: string
+ *               descriptionEn:
+ *                 type: string
+ *               descriptionHi:
+ *                 type: string
+ *               descriptionMr:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *                 enum: [active, inactive]
+ *     responses:
+ *       200:
+ *         description: Banner updated
+ */
+router.put(
+  "/banners/:id",
+  adminAuth,
+  upload.single("image"),
+  validate(updateBannerSchema),
+  bannerManagementController.updateBanner
+);
+
+/**
+ * @swagger
+ * /api/v1/admin/banners/{id}/status:
+ *   patch:
+ *     tags: [Website Banners]
+ *     summary: Activate or deactivate banner
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [status]
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [active, inactive]
+ *     responses:
+ *       200:
+ *         description: Banner status updated
+ */
+router.patch(
+  "/banners/:id/status",
+  adminAuth,
+  validate(updateBannerStatusSchema),
+  bannerManagementController.updateBannerStatus
+);
+
+/**
+ * @swagger
+ * /api/v1/admin/banners/{id}:
+ *   delete:
+ *     tags: [Website Banners]
+ *     summary: Delete banner
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Banner deleted
+ */
+router.delete("/banners/:id", adminAuth, bannerManagementController.deleteBanner);
 
 module.exports = router;

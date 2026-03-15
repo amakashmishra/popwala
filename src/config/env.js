@@ -7,9 +7,9 @@ const nodeEnv = process.env.NODE_ENV || "development";
 const envFilePath = path.resolve(process.cwd(), `.env.${nodeEnv}`);
 
 if (fs.existsSync(envFilePath)) {
-  config({ path: envFilePath });
+  config({ path: envFilePath, override: true });
 } else {
-  config();
+  config({ override: true });
 }
 
 const schema = Joi.object({

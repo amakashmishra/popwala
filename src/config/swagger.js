@@ -19,6 +19,7 @@ const options = {
       { name: "Admin Architects", description: "Admin architect management endpoints" },
       { name: "Contractor", description: "Contractor portal authentication and profile endpoints" },
       { name: "Architect", description: "Architect portal authentication and profile endpoints" },
+      { name: "Website Banners", description: "Homepage banner endpoints" },
     ],
     servers: [{ url: env.API_BASE_URL }],
     components: {
