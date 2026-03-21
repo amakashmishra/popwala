@@ -40,6 +40,7 @@ const bannerManagementController = require("./banner-management.controller");
 const stylesController = require("../catalog/styles.controller");
 const typesController = require("../catalog/types.controller");
 const categoriesController = require("../catalog/categories.controller");
+const servicesController = require("../catalog/services.controller");
 const leadsController = require("./leads.controller");
 
 const router = express.Router();
@@ -866,5 +867,34 @@ router.patch(
   stylesController.updateStyleStatus
 );
 router.delete("/styles/:id", adminAuth, stylesController.deleteStyle);
+
+router.get(
+  "/services",
+  adminAuth,
+  validate(listCatalogQuerySchema, "query"),
+  servicesController.listServices
+);
+router.post(
+  "/services",
+  adminAuth,
+  upload.single("image"),
+  validate(createCatalogSchema),
+  servicesController.createService
+);
+router.get("/services/:id", adminAuth, servicesController.getService);
+router.put(
+  "/services/:id",
+  adminAuth,
+  upload.single("image"),
+  validate(updateCatalogSchema),
+  servicesController.updateService
+);
+router.patch(
+  "/services/:id/status",
+  adminAuth,
+  validate(updateCatalogStatusSchema),
+  servicesController.updateServiceStatus
+);
+router.delete("/services/:id", adminAuth, servicesController.deleteService);
 
 module.exports = router;

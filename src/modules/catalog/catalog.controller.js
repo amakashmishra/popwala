@@ -3,6 +3,7 @@ const { successResponse } = require("../../utils/apiResponse");
 const stylesService = require("./styles.service");
 const typesService = require("./types.service");
 const categoriesService = require("./categories.service");
+const servicesService = require("./services.service");
 
 exports.listActiveStyles = asyncHandler(async (req, res) => {
   const styles = await stylesService.listActiveStyles();
@@ -17,4 +18,9 @@ exports.listActiveTypes = asyncHandler(async (req, res) => {
 exports.listActiveCategories = asyncHandler(async (req, res) => {
   const categories = await categoriesService.listActiveCategories();
   return successResponse(res, { categories }, "Active categories fetched");
+});
+
+exports.listActiveServices = asyncHandler(async (req, res) => {
+  const services = await servicesService.listActiveServices();
+  return successResponse(res, { services }, "Active services fetched");
 });
