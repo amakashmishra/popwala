@@ -42,6 +42,16 @@ const typesController = require("../catalog/types.controller");
 const categoriesController = require("../catalog/categories.controller");
 const servicesController = require("../catalog/services.controller");
 const leadsController = require("./leads.controller");
+const popularDealsController = require("../marketing/popular-deals.controller");
+const promotionsController = require("../marketing/promotions.controller");
+const {
+  createPopularDealSchema,
+  updatePopularDealSchema,
+  createPromotionSchema,
+  updatePromotionSchema,
+  updateMarketingStatusSchema,
+  listMarketingQuerySchema,
+} = require("../../validators/marketing.validator");
 
 const router = express.Router();
 
@@ -867,6 +877,64 @@ router.patch(
   stylesController.updateStyleStatus
 );
 router.delete("/styles/:id", adminAuth, stylesController.deleteStyle);
+
+router.get(
+  "/popular-deals",
+  adminAuth,
+  validate(listMarketingQuerySchema, "query"),
+  popularDealsController.listPopularDeals
+);
+router.post(
+  "/popular-deals",
+  adminAuth,
+  upload.single("image"),
+  validate(createPopularDealSchema),
+  popularDealsController.createPopularDeal
+);
+router.get("/popular-deals/:id", adminAuth, popularDealsController.getPopularDeal);
+router.put(
+  "/popular-deals/:id",
+  adminAuth,
+  upload.single("image"),
+  validate(updatePopularDealSchema),
+  popularDealsController.updatePopularDeal
+);
+router.patch(
+  "/popular-deals/:id/status",
+  adminAuth,
+  validate(updateMarketingStatusSchema),
+  popularDealsController.updatePopularDealStatus
+);
+router.delete("/popular-deals/:id", adminAuth, popularDealsController.deletePopularDeal);
+
+router.get(
+  "/promotions",
+  adminAuth,
+  validate(listMarketingQuerySchema, "query"),
+  promotionsController.listPromotions
+);
+router.post(
+  "/promotions",
+  adminAuth,
+  upload.single("image"),
+  validate(createPromotionSchema),
+  promotionsController.createPromotion
+);
+router.get("/promotions/:id", adminAuth, promotionsController.getPromotion);
+router.put(
+  "/promotions/:id",
+  adminAuth,
+  upload.single("image"),
+  validate(updatePromotionSchema),
+  promotionsController.updatePromotion
+);
+router.patch(
+  "/promotions/:id/status",
+  adminAuth,
+  validate(updateMarketingStatusSchema),
+  promotionsController.updatePromotionStatus
+);
+router.delete("/promotions/:id", adminAuth, promotionsController.deletePromotion);
 
 router.get(
   "/services",
