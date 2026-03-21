@@ -40,6 +40,7 @@ const bannerManagementController = require("./banner-management.controller");
 const stylesController = require("../catalog/styles.controller");
 const typesController = require("../catalog/types.controller");
 const categoriesController = require("../catalog/categories.controller");
+const leadsController = require("./leads.controller");
 
 const router = express.Router();
 
@@ -268,6 +269,35 @@ router.patch(
   validate(adminUpdateUserStatusSchema),
   adminController.updateUserStatus
 );
+
+/**
+ * @swagger
+ * /api/v1/admin/dashboard/stats:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Fetch dashboard statistics
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+           format: date
+ *         description: Start of date range (inclusive)
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End of date range (inclusive)
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard stats fetched
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/dashboard/stats", adminAuth, adminController.getDashboardStats);
 
 /**
  * @swagger
@@ -771,6 +801,8 @@ router.patch(
  *         description: Banner deleted
  */
 router.delete("/banners/:id", adminAuth, bannerManagementController.deleteBanner);
+
+router.get("/leads/recent", adminAuth, leadsController.listRecentLeads);
 
 router.get(
   "/product-types",

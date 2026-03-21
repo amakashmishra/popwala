@@ -32,6 +32,22 @@ const findAll = ({ search, status, skip = 0, limit = 20 } = {}) =>
 const countAll = ({ search, status } = {}) =>
   Banner.countDocuments(buildFilters({ search, status }));
 
+const buildDateFilter = (start, end) => {
+  const filter = {};
+  if (start) filter.$gte = start;
+  if (end) filter.$lte = end;
+  return Object.keys(filter).length ? filter : null;
+};
+
+const countCreatedBetween = (start, end) => {
+  const filters = { deletedAt: null };
+  const dateFilter = buildDateFilter(start, end);
+  if (dateFilter) {
+    filters.createdAt = dateFilter;
+  }
+  return Banner.countDocuments(filters);
+};
+
 const findActive = ({ limit = 10 } = {}) =>
   Banner.find({ deletedAt: null, status: "active" }).sort({ createdAt: -1 }).limit(limit);
 
@@ -49,4 +65,5 @@ module.exports = {
   findActive,
   updateById,
   softDeleteById,
+  countCreatedBetween,
 };

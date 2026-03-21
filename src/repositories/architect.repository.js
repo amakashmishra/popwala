@@ -1,5 +1,12 @@
 const Architect = require("../models/architect.model");
 
+const buildDateFilter = (start, end) => {
+  const filter = {};
+  if (start) filter.$gte = start;
+  if (end) filter.$lte = end;
+  return Object.keys(filter).length ? filter : null;
+};
+
 const buildFilters = ({ search, status } = {}) => {
   const filters = { deletedAt: null };
 
@@ -36,6 +43,15 @@ const findAll = ({ search, status, skip = 0, limit = 20 } = {}) =>
 const countAll = ({ search, status } = {}) =>
   Architect.countDocuments(buildFilters({ search, status }));
 
+const countCreatedBetween = (start, end) => {
+  const filters = { deletedAt: null };
+  const dateFilter = buildDateFilter(start, end);
+  if (dateFilter) {
+    filters.createdAt = dateFilter;
+  }
+  return Architect.countDocuments(filters);
+};
+
 const updateById = (id, payload) =>
   Architect.findOneAndUpdate({ _id: id, deletedAt: null }, payload, { new: true, runValidators: true });
 
@@ -53,6 +69,7 @@ module.exports = {
   findByPhoneNumberWithPassword,
   findAll,
   countAll,
+  countCreatedBetween,
   updateById,
   softDeleteById,
   hardDeleteById,

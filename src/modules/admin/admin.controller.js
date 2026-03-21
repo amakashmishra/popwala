@@ -1,6 +1,7 @@
 const asyncHandler = require("../../utils/asyncHandler");
 const { successResponse } = require("../../utils/apiResponse");
 const adminService = require("./admin.service");
+const dashboardService = require("./dashboard.service");
 
 exports.listUsers = asyncHandler(async (req, res) => {
   const data = await adminService.listUsers({
@@ -21,4 +22,12 @@ exports.updateUserStatus = asyncHandler(async (req, res) => {
     actorId: req.user.sub,
   });
   return successResponse(res, { user }, "User status updated");
+});
+
+exports.getDashboardStats = asyncHandler(async (req, res) => {
+  const stats = await dashboardService.getDashboardStats({
+    startDate: req.query.startDate,
+    endDate: req.query.endDate,
+  });
+  return successResponse(res, { stats }, "Dashboard statistics fetched");
 });

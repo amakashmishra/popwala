@@ -21,6 +21,13 @@ const buildFilters = ({ search, status } = {}) => {
   return filters;
 };
 
+const buildDateFilter = (start, end) => {
+  const filter = {};
+  if (start) filter.$gte = start;
+  if (end) filter.$lte = end;
+  return Object.keys(filter).length ? filter : null;
+};
+
 const create = (payload) => Contractor.create(payload);
 
 const findById = (id) => Contractor.findOne({ _id: id, deletedAt: null });
@@ -41,6 +48,15 @@ const findAll = ({ search, status, skip = 0, limit = 20 } = {}) =>
 const countAll = ({ search, status } = {}) =>
   Contractor.countDocuments(buildFilters({ search, status }));
 
+const countCreatedBetween = (start, end) => {
+  const filters = { deletedAt: null };
+  const dateFilter = buildDateFilter(start, end);
+  if (dateFilter) {
+    filters.createdAt = dateFilter;
+  }
+  return Contractor.countDocuments(filters);
+};
+
 const updateById = (id, payload) =>
   Contractor.findOneAndUpdate({ _id: id, deletedAt: null }, payload, { new: true, runValidators: true });
 
@@ -57,6 +73,7 @@ module.exports = {
   findByPhoneNumberWithPassword,
   findAll,
   countAll,
+  countCreatedBetween,
   updateById,
   softDeleteById,
   hardDeleteById,

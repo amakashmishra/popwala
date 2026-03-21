@@ -73,8 +73,24 @@ const findAllWithFilters = ({ search, role, status, skip = 0, limit = 20 } = {})
   return User.find(filters).sort({ createdAt: -1 }).skip(skip).limit(limit);
 };
 
+const buildDateFilter = (start, end) => {
+  const filter = {};
+  if (start) filter.$gte = start;
+  if (end) filter.$lte = end;
+  return Object.keys(filter).length ? filter : null;
+};
+
 const countAllWithFilters = ({ search, role, status } = {}) => {
   const filters = buildAdminFilters({ search, role, status });
+  return User.countDocuments(filters);
+};
+
+const countCreatedBetween = (start, end) => {
+  const filters = { deletedAt: null };
+  const dateFilter = buildDateFilter(start, end);
+  if (dateFilter) {
+    filters.createdAt = dateFilter;
+  }
   return User.countDocuments(filters);
 };
 
@@ -89,4 +105,5 @@ module.exports = {
   findAll,
   findAllWithFilters,
   countAllWithFilters,
+  countCreatedBetween,
 };
